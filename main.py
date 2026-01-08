@@ -3,6 +3,11 @@ import os
 from fastapi import FastAPI, Request
 from dotenv import load_dotenv
 import requests
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -11,7 +16,7 @@ app = FastAPI()
 # Configuration
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
-ADMIN_PHONE = os.getenv("ADMIN_PHONE")  # Noam's phone with country code (e.g., 972501234567)
+ADMIN_PHONE = os.getenv("ADMIN_PHONE")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "my_secret_token")
 
 # Store conversation state in memory
@@ -32,21 +37,26 @@ async def verify_webhook(request: Request):
 async def receive_message(request: Request):
     """Receive messages from customers"""
     data = await request.json()
+    logger.info(f"Received webhook data: {data}")
     
     try:
         message = data["entry"][0]["changes"][0]["value"]["messages"][0]
         sender = message["from"]
         text = message["text"]["body"].strip()
         
+        logger.info(f"Message from {sender}: {text}")
+        
         handle_conversation(sender, text)
         
-    except (KeyError, IndexError):
-        pass
+    except (KeyError, IndexError) as e:
+        logger.error(f"Error parsing message: {e}")
+        logger.error(f"Data structure: {data}")
     
     return {"status": "ok"}
 
 def handle_conversation(sender: str, text: str):
     """Handle conversation flow with customer"""
+    logger.info(f"Handling conversation for {sender}, step: {conversations.get(sender, {}).get('step', 'new')}")
     
     # If this is a new conversation
     if sender not in conversations:
@@ -69,11 +79,11 @@ def handle_conversation(sender: str, text: str):
         state["step"] = 3
         send_message(sender, "נהדר! כמה אנשים צפויים?")
     
-    # Step 3: Get number of guests and send to Noam
+    # Step 3: Get number of guests and send to admin
     elif step == 3:
         state["guests"] = text
         
-        # Send details to Noam
+        # Send details to admin
         summary = (
             f"🍦 ליד חדש מגולדה!\n\n"
             f"📅 תאריך: {state['date']}\n"
@@ -91,6 +101,8 @@ def handle_conversation(sender: str, text: str):
 
 def send_message(to: str, text: str):
     """Send message via WhatsApp API"""
+    logger.info(f"Sending message to {to}: {text}")
+    
     url = f"https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/messages"
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
@@ -102,7 +114,12 @@ def send_message(to: str, text: str):
         "type": "text",
         "text": {"body": text}
     }
-    requests.post(url, headers=headers, json=data)
+    
+    response = requests.post(url, headers=headers, json=data)
+    logger.info(f"WhatsApp API response: {response.status_code} - {response.text}")
+    
+    if response.status_code != 200:
+        logger.error(f"Failed to send message: {response.text}")
 
 @app.get("/")
 def home():

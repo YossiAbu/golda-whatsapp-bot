@@ -113,14 +113,19 @@ def home():
 # CONVERSATION HANDLERS
 # ============================================================================
 
+def restart_with_cancel_text():
+    """Instructions for restarting conversation with cancel text"""
+    return """רוצה להתחיל מחדש? כתוב 'ביטול'"""
+
 def start_conversation(sender: str):
     """Start a new conversation with date request"""
     conversations[sender] = {"step": 1}
     message = (
         "מתי מתקיים האירוע?\n"
-        "אנא הכנס תאריך בפורמט: DD/MM/YYYY\n"
-        "(לדוגמה: 31/12/2026)\n\n"
-        "רוצה להתחיל מחדש? כתוב 'ביטול'"
+        "אנא הכנס תאריך בפורמט:\n"
+        "DD/MM/YYYY\n"
+        "(לדוגמה: 31/12/2026)\n\n" +
+        restart_with_cancel_text()
     )
     send_message(sender, message)
 
@@ -163,20 +168,26 @@ def cancel_conversation(sender: str):
     """Cancel current conversation and restart"""
     if sender in conversations:
         del conversations[sender]
-    
-    send_message(sender, "✅ השיחה בוטלה")
+        
+    message = (
+        "✅ השיחה בוטלה\n"
+        "נתחיל שוב מההתחלה"
+    )
+    send_message(sender, message)
     send_welcome_message(sender)
 
 
 def handle_date_input(sender: str, text: str, state: dict):
     """Handle date input from customer"""
     if not is_valid_date(text):
-        send_message(sender, """❌ תאריך לא תקין.
-
-אנא הכנס תאריך בפורמט: DD/MM/YYYY
-(לדוגמה: 31/12/2026)
-
-💡 רוצה להתחיל מחדש? כתוב 'ביטול'""")
+        message = (
+            "❌ תאריך לא תקין\n"
+            "אנא הכנס תאריך בפורמט:\n"
+            "DD/MM/YYYY\n"
+            "(לדוגמה: 31/12/2026)\n\n" +
+            restart_with_cancel_text()
+        )
+        send_message(sender, message)
         return
     
     state["date"] = text
@@ -194,47 +205,50 @@ def handle_event_type_selection(sender: str, selected_title: str):
     if state.get("step") == 2:
         state["event_type"] = selected_title
         state["step"] = 3
-        send_message(sender, """מצוין! 📍
-
-איפה מתקיים האירוע?
-(עיר או כתובת מדויקת)
-
-💡 רוצה להתחיל מחדש? כתוב 'ביטול'""")
+        message = (
+            "מצוין!\n"
+            "איפה מתקיים האירוע?\n"
+            "(עיר או כתובת מדויקת)\n\n" +
+            restart_with_cancel_text()
+        )
+        send_message(sender, message)
 
 
 def handle_event_type_text(sender: str, text: str, state: dict):
     """Handle event type as text (fallback)"""
     state["event_type"] = text
     state["step"] = 3
-    send_message(sender, """מצוין! 📍
-
-איפה מתקיים האירוע?
-(עיר או כתובת מדויקת)
-
-💡 רוצה להתחיל מחדש? כתוב 'ביטול'""")
+    message = (
+        "מצוין!\n"
+        "איפה מתקיים האירוע?\n"
+        "(עיר או כתובת מדויקת)\n\n" +
+        restart_with_cancel_text()
+    )
+    send_message(sender, message)
 
 
 def handle_location_input(sender: str, text: str, state: dict):
     """Handle location input from customer"""
     state["location"] = text
     state["step"] = 4
-    send_message(sender, """נהדר! 👥
-
-כמה אנשים צפויים?
-(אנא הכנס מספר)
-
-💡 רוצה להתחיל מחדש? כתוב 'ביטול'""")
+    message = (
+        "נהדר!\n"
+        "כמה אנשים צפויים?\n" + 
+        restart_with_cancel_text()
+    )
+    send_message(sender, message)
 
 
 def handle_guests_input(sender: str, text: str, state: dict):
     """Handle number of guests input from customer"""
     if not is_valid_number(text):
-        send_message(sender, """❌ קלט לא תקין.
-
-אנא הכנס מספר של כמות אנשים
-(לדוגמה: 150)
-
-💡 רוצה להתחיל מחדש? כתוב 'ביטול'""")
+        message = (
+            "❌ קלט לא תקין.\n"
+            "אנא הכנס מספר של כמות אנשים\n"
+            "(לדוגמה: 150)\n\n" +
+            restart_with_cancel_text()
+        )
+        send_message(sender, message)
         return
     
     state["guests"] = text
@@ -313,17 +327,19 @@ def send_welcome_image(sender: str, media_id: str):
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
+    message = (
+        "שלום! 🍦\n"
+        "ברוכים הבאים לעגלה הרשמית של גלידה גולדה!\n"
+        "אנחנו מביאים את חוויית הגלידה הטובה ביותר ישירות לאירוע שלכם\n"
+        "עגלת גלידה מקצועית עם מגוון טעמים עד אליכם- להפוך כל אירוע לבלתי נשכח"
+    )
     data = {
         "messaging_product": "whatsapp",
         "to": sender,
         "type": "image",
         "image": {
             "id": media_id,
-            "caption": """שלום! 🍦
-
-ברוכים הבאים לגולדה - עגלת הגלידה שמגיעה אליכם!
-
-אנחנו מביאים את חוויית הגלידה הטובה ביותר ישירות לאירוע שלכם."""
+            "caption": message
         }
     }
     
@@ -338,6 +354,10 @@ def send_start_button(sender: str):
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
+    message = (
+        "בואו נתחיל!\n"
+        "נשמח לשמוע על האירוע שלכם"
+    )
     data = {
         "messaging_product": "whatsapp",
         "to": sender,
@@ -345,9 +365,7 @@ def send_start_button(sender: str):
         "interactive": {
             "type": "button",
             "body": {
-                "text": """עם עגלת גלידה מקצועית ומגוון טעמים, נהפוך כל אירוע לבלתי נשכח! 🎉
-
-בואו נתחיל - נשמח לשמוע על האירוע שלכם:"""
+                "text": message
             },
             "action": {
                 "buttons": [
@@ -355,7 +373,7 @@ def send_start_button(sender: str):
                         "type": "reply",
                         "reply": {
                             "id": "start",
-                            "title": "התחל 🚀"
+                            "title": "התחל"
                         }
                     }
                 ]
@@ -374,6 +392,10 @@ def send_event_type_list(sender: str):
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
+    message = (
+        "מעולה! איזה סוג אירוע?" +
+        restart_with_cancel_text        
+    )
     data = {
         "messaging_product": "whatsapp",
         "to": sender,
@@ -381,9 +403,7 @@ def send_event_type_list(sender: str):
         "interactive": {
             "type": "list",
             "body": {
-                "text": """מעולה! איזה סוג אירוע?
-
-💡 רוצה להתחיל מחדש? כתוב 'ביטול'"""
+                "text": message
             },
             "action": {
                 "button": "בחר סוג אירוע",
@@ -417,31 +437,29 @@ def send_event_type_list(sender: str):
 
 def send_customer_confirmation(sender: str, state: dict):
     """Send confirmation message to customer with summary"""
-    message = f"""תודה רבה! 🎉
-
-קיבלנו את הפרטים שלך:
-
-📅 תאריך: {state['date']}
-🎉 סוג: {state['event_type']}
-📍 מיקום: {state['location']}
-👥 אנשים: {state['guests']}
-
-נציג יצור איתך קשר בהקדם עם הצעת מחיר.
-
-מצפים לראותכם! 🍦✨"""
-    
+    message = (
+        "תודה רבה! 🎉\n"
+        "קיבלנו את הפרטים שלך:\n"
+        f"📅 תאריך: {state['date']}\n"
+        f"🎉 סוג: {state['event_type']}\n"
+        f"📍 מיקום: {state['location']}\n"
+        f"👥 אנשים: {state['guests']}\n"
+        "נציג יצור איתך קשר בהקדם עם הצעת מחיר\n"
+        "מצפים לראותכם! 🍦✨"
+    )
     send_message(sender, message)
 
 
 def send_admin_notification(sender: str, state: dict):
     """Send lead details to admin"""
-    message = f"""🍦 ליד חדש מגולדה!
-
-📅 תאריך: {state['date']}
-🎉 סוג: {state['event_type']}
-📍 מיקום: {state['location']}
-👥 אנשים: {state['guests']}
-📞 טלפון: +{sender}"""
+    message = (
+        f"🍦 ליד חדש מגולדה!\n\n"
+        f"📅 תאריך: {state['date']}\n"
+        f"🎉 סוג: {state['event_type']}\n"
+        f"📍 מיקום: {state['location']}\n"
+        f"👥 אנשים: {state['guests']}\n"
+        f"📞 טלפון: +{sender}"
+    )
     
     send_message(ADMIN_PHONE, message)
 

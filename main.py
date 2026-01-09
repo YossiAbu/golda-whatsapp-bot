@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from dotenv import load_dotenv
 import requests
 import logging
+from datetime import datetime
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -54,6 +55,15 @@ async def receive_message(request: Request):
     
     return {"status": "ok"}
 
+def is_valid_date(date_str: str) -> bool:
+    """Check if date is in DD/MM/YYYY format and valid"""
+    try:
+        # Check format
+        datetime.strptime(date_str, "%d/%m/%Y")
+        return True
+    except ValueError:
+        return False
+
 def handle_conversation(sender: str, text: str):
     """Handle conversation flow with customer"""
     logger.info(f"Handling conversation for {sender}, step: {conversations.get(sender, {}).get('step', 'new')}")
@@ -61,7 +71,7 @@ def handle_conversation(sender: str, text: str):
     # If this is a new conversation
     if sender not in conversations:
         conversations[sender] = {"step": 1}
-        send_message(sender, "שלום! 🍦\nמתי מתקיים האירוע? (לדוגמה: 15/03/2026)")
+        send_message(sender, "שלום! 🍦\n\nמתי מתקיים האירוע?\n\nאנא הכנס תאריך בפורמט: DD/MM/YYYY\n(לדוגמה: 01/01/2026)")
         return
     
     state = conversations[sender]
@@ -69,6 +79,11 @@ def handle_conversation(sender: str, text: str):
     
     # Step 1: Get event date
     if step == 1:
+        # Validate date format
+        if not is_valid_date(text):
+            send_message(sender, "❌ תאריך לא תקין.\n\nאנא הכנס תאריך בפורמט: DD/MM/YYYY\n(לדוגמה: 31/12/2026)")
+            return
+        
         state["date"] = text
         state["step"] = 2
         send_message(sender, "מעולה! איזה סוג אירוע? (יום הולדת, חתונה, בר מצווה...)")

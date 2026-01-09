@@ -233,7 +233,7 @@ def handle_location_input(sender: str, text: str, state: dict):
     state["step"] = 4
     message = (
         "נהדר!\n"
-        "כמה אנשים צפויים?\n" + 
+        "כמה אנשים צפויים?\n\n" + 
         restart_with_cancel_text()
     )
     send_message(sender, message)

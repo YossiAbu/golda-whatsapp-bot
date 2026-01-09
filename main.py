@@ -219,7 +219,7 @@ def handle_conversation(sender: str, text: str):
         send_message(ADMIN_PHONE, summary)
         
         # Thank the customer
-        send_message(sender, "תודה רבה! 🎉\bנציג יחזור אליך בהקדם עם הצעת מחיר.")
+        send_message(sender, "תודה רבה! 🎉\nנציג יחזור אליך בהקדם עם הצעת מחיר.")
         
         # Reset conversation
         del conversations[sender]

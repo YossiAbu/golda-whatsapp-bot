@@ -116,12 +116,15 @@ def home():
 def start_conversation(sender: str):
     """Start a new conversation with date request"""
     conversations[sender] = {"step": 1}
-    send_message(sender, """מתי מתקיים האירוע?
+    send_message(sender, 
+                 """מתי מתקיים האירוע?
+                אנא הכנס תאריך בפורמט:
+                DD/MM/YYYY
+                (לדוגמה: 31/12/2026)
 
-אנא הכנס תאריך בפורמט: DD/MM/YYYY
-(לדוגמה: 31/12/2026)
-
-💡 רוצה להתחיל מחדש? כתוב 'ביטול'""")
+                רוצה להתחיל מחדש? כתוב 'ביטול'
+                """
+    )
 
 
 def handle_text_message(sender: str, text: str):
@@ -129,7 +132,7 @@ def handle_text_message(sender: str, text: str):
     logger.info(f"Handling message for {sender}, step: {conversations.get(sender, {}).get('step', 'new')}")
     
     # Check for cancel command
-    if text.lower() in ["ביטול", "בטל", "התחיל מחדש", "מחדש"]:
+    if text.lower() in ["ביטול", "בטל", "התחיל מחדש", "מחדש", "חדש"]:
         cancel_conversation(sender)
         return
     
@@ -163,7 +166,7 @@ def cancel_conversation(sender: str):
     if sender in conversations:
         del conversations[sender]
     
-    send_message(sender, "השיחה בוטלה. ✅\n\nרוצה להתחיל מחדש?")
+    send_message(sender, "✅ השיחה בוטלה")
     send_welcome_message(sender)
 
 

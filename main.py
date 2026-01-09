@@ -23,6 +23,20 @@ VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "my_secret_token")
 # Store conversation state in memory
 conversations = {}
 
+# Map event type IDs to display names
+EVENT_TYPES = {
+    "wedding": "💍 חתונה",
+    "bar_bat_mitzvah": "🕍 בר/בת מצווה",
+    "birthday": "🎂 יום הולדת",
+    "brit_milah": "👶 ברית מילה",
+    "engagement": "💕 אירוסין",
+    "company_event": "🏢 אירוע חברה",
+    "graduation_party": "🎓 מסיבת סיום",
+    "bachelor_party": "🎉 מסיבת רווקים/רווקות",
+    "festival": "🎪 פסטיבל/יריד",
+    "other": "❓ אחר"
+}
+
 @app.get("/webhook")
 async def verify_webhook(request: Request):
     """Webhook verification from Meta"""
@@ -41,13 +55,30 @@ async def receive_message(request: Request):
     logger.info(f"Received webhook data: {data}")
     
     try:
-        message = data["entry"][0]["changes"][0]["value"]["messages"][0]
-        sender = message["from"]
-        text = message["text"]["body"].strip()
+        value = data["entry"][0]["changes"][0]["value"]
         
-        logger.info(f"Message from {sender}: {text}")
+        # Check if it's an interactive message (list response)
+        if "messages" in value and value["messages"][0].get("type") == "interactive":
+            message = value["messages"][0]
+            sender = message["from"]
+            
+            # Get the selected option ID
+            interactive = message["interactive"]
+            if interactive["type"] == "list_reply":
+                selected_id = interactive["list_reply"]["id"]
+                selected_title = interactive["list_reply"]["title"]
+                
+                logger.info(f"Interactive response from {sender}: {selected_id} - {selected_title}")
+                handle_interactive_response(sender, selected_id, selected_title)
         
-        handle_conversation(sender, text)
+        # Regular text message
+        elif "messages" in value and value["messages"][0].get("type") == "text":
+            message = value["messages"][0]
+            sender = message["from"]
+            text = message["text"]["body"].strip()
+            
+            logger.info(f"Text message from {sender}: {text}")
+            handle_conversation(sender, text)
         
     except (KeyError, IndexError) as e:
         logger.error(f"Error parsing message: {e}")
@@ -60,6 +91,14 @@ def is_valid_date(date_str: str) -> bool:
     try:
         datetime.strptime(date_str, "%d/%m/%Y")
         return True
+    except ValueError:
+        return False
+
+def is_valid_number(num_str: str) -> bool:
+    """Check if string is a valid positive number"""
+    try:
+        num = float(num_str)
+        return num > 0
     except ValueError:
         return False
 
@@ -108,6 +147,20 @@ def send_event_type_list(sender: str):
     if response.status_code != 200:
         logger.error(f"Failed to send list: {response.text}")
 
+def handle_interactive_response(sender: str, selected_id: str, selected_title: str):
+    """Handle response from interactive list"""
+    
+    if sender not in conversations:
+        return
+    
+    state = conversations[sender]
+    
+    # User selected event type
+    if state.get("step") == 2:
+        state["event_type"] = selected_title
+        state["step"] = 3
+        send_message(sender, "נהדר! כמה אנשים צפויים?\n(אנא הכנס מספר)")
+
 def handle_conversation(sender: str, text: str):
     """Handle conversation flow with customer"""
     logger.info(f"Handling conversation for {sender}, step: {conversations.get(sender, {}).get('step', 'new')}")
@@ -115,7 +168,7 @@ def handle_conversation(sender: str, text: str):
     # If this is a new conversation
     if sender not in conversations:
         conversations[sender] = {"step": 1}
-        send_message(sender, "שלום! 🍦\nמתי מתקיים האירוע?\nאנא הכנס תאריך בפורמט:\n DD/MM/YYYY\n(לדוגמה: 31/12/2026)")
+        send_message(sender, "שלום! 🍦\nמתי מתקיים האירוע?\nאנא הכנס תאריך בפורמט:\nDD/MM/YYYY\n(לדוגמה: 31/12/2026)")
         return
     
     state = conversations[sender]
@@ -130,17 +183,22 @@ def handle_conversation(sender: str, text: str):
         
         state["date"] = text
         state["step"] = 2
-        # Send interactive list instead of text
+        # Send interactive list
         send_event_type_list(sender)
     
-    # Step 2: Get event type (from list response)
+    # Step 2: Should be handled by interactive response, but handle text fallback
     elif step == 2:
         state["event_type"] = text
         state["step"] = 3
-        send_message(sender, "נהדר! כמה אנשים צפויים?")
+        send_message(sender, "נהדר! כמה אנשים צפויים?\n(אנא הכנס מספר)")
     
-    # Step 3: Get number of guests and send to admin
+    # Step 3: Get number of guests
     elif step == 3:
+        # Validate number
+        if not is_valid_number(text):
+            send_message(sender, "❌ קלט לא תקין.\nאנא הכנס מספר של כמות אנשים\n(לדוגמה: 150)")
+            return
+        
         state["guests"] = text
         
         # Send details to admin

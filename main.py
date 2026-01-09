@@ -71,7 +71,7 @@ def handle_conversation(sender: str, text: str):
     # If this is a new conversation
     if sender not in conversations:
         conversations[sender] = {"step": 1}
-        send_message(sender, "שלום! 🍦\n\nמתי מתקיים האירוע?\n\nאנא הכנס תאריך בפורמט: DD/MM/YYYY\n(לדוגמה: 01/01/2026)")
+        send_message(sender, "שלום! 🍦\nמתי מתקיים האירוע?\nאנא הכנס תאריך בפורמט:\n DD/MM/YYYY\n(לדוגמה: 31/12/2026)")
         return
     
     state = conversations[sender]
@@ -81,7 +81,7 @@ def handle_conversation(sender: str, text: str):
     if step == 1:
         # Validate date format
         if not is_valid_date(text):
-            send_message(sender, "❌ תאריך לא תקין.\n\nאנא הכנס תאריך בפורמט: DD/MM/YYYY\n(לדוגמה: 31/12/2026)")
+            send_message(sender, "❌ תאריך לא תקין.\nאנא הכנס תאריך בפורמט: DD/MM/YYYY\n(לדוגמה: 31/12/2026)")
             return
         
         state["date"] = text

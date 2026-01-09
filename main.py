@@ -97,7 +97,7 @@ def is_valid_date(date_str: str) -> bool:
 def is_valid_number(num_str: str) -> bool:
     """Check if string is a valid positive number"""
     try:
-        num = float(num_str)
+        num = int(num_str)
         return num > 0
     except ValueError:
         return False

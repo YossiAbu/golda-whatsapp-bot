@@ -115,14 +115,14 @@ def home():
 
 def restart_with_cancel_text():
     """Instructions for restarting conversation with cancel text"""
-    return """רוצה להתחיל מחדש? כתוב 'ביטול'"""
+    return """רוצה להתחיל מחדש? כתבו 'ביטול'"""
 
 def start_conversation(sender: str):
     """Start a new conversation with date request"""
     conversations[sender] = {"step": 1}
     message = (
         "מתי מתקיים האירוע?\n"
-        "אנא הכנס תאריך בפורמט:\n"
+        "אנא הכניסו תאריך בפורמט:\n"
         "DD/MM/YYYY\n"
         "(לדוגמה: 31/12/2026)\n\n" +
         restart_with_cancel_text()
@@ -182,7 +182,7 @@ def handle_date_input(sender: str, text: str, state: dict):
     if not is_valid_date(text):
         message = (
             "❌ תאריך לא תקין\n"
-            "אנא הכנס תאריך בפורמט:\n"
+            "אנא הכניסו תאריך בפורמט:\n"
             "DD/MM/YYYY\n"
             "(לדוגמה: 31/12/2026)\n\n" +
             restart_with_cancel_text()
@@ -244,7 +244,7 @@ def handle_guests_input(sender: str, text: str, state: dict):
     if not is_valid_number(text):
         message = (
             "❌ קלט לא תקין.\n"
-            "אנא הכנס מספר של כמות אנשים\n"
+            "אנא הכניסו מספר של כמות אנשים\n"
             "(לדוגמה: 150)\n\n" +
             restart_with_cancel_text()
         )
@@ -439,12 +439,12 @@ def send_customer_confirmation(sender: str, state: dict):
     """Send confirmation message to customer with summary"""
     message = (
         "תודה רבה! 🎉\n\n"
-        "קיבלנו את הפרטים שלך:\n"
+        "קיבלנו את הפרטים שלכם:\n"
         f"📅 תאריך: {state['date']}\n"
         f"🎉 סוג: {state['event_type']}\n"
         f"📍 מיקום: {state['location']}\n"
         f"👥 אנשים: {state['guests']}\n\n"
-        "נציג יצור איתך קשר בהקדם עם הצעת מחיר\n"
+        "נציג יצור איתכם קשר בהקדם עם הצעת מחיר\n"
         "מצפים לראותכם! 🍦✨"
     )
     send_message(sender, message)

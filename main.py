@@ -58,11 +58,55 @@ async def receive_message(request: Request):
 def is_valid_date(date_str: str) -> bool:
     """Check if date is in DD/MM/YYYY format and valid"""
     try:
-        # Check format
         datetime.strptime(date_str, "%d/%m/%Y")
         return True
     except ValueError:
         return False
+
+def send_event_type_list(sender: str):
+    """Send interactive list for event type selection"""
+    url = f"https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/messages"
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "messaging_product": "whatsapp",
+        "to": sender,
+        "type": "interactive",
+        "interactive": {
+            "type": "list",
+            "body": {
+                "text": "מעולה! איזה סוג אירוע?"
+            },
+            "action": {
+                "button": "בחר סוג אירוע",
+                "sections": [
+                    {
+                        "title": "סוג אירוע",
+                        "rows": [
+                            {"id": "wedding", "title": "💍 חתונה"},
+                            {"id": "bar_bat_mitzvah", "title": "🕍 בר/בת מצווה"},
+                            {"id": "birthday", "title": "🎂 יום הולדת"},
+                            {"id": "brit_milah", "title": "👶 ברית מילה"},
+                            {"id": "engagement", "title": "💕 אירוסין"},
+                            {"id": "company_event", "title": "🏢 אירוע חברה"},
+                            {"id": "graduation_party", "title": "🎓 מסיבת סיום"},
+                            {"id": "bachelor_party", "title": "🎉 מסיבת רווקים/רווקות"},
+                            {"id": "festival", "title": "🎪 פסטיבל/יריד"},
+                            {"id": "other", "title": "❓ אחר"}
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+    
+    response = requests.post(url, headers=headers, json=data)
+    logger.info(f"WhatsApp API response: {response.status_code} - {response.text}")
+    
+    if response.status_code != 200:
+        logger.error(f"Failed to send list: {response.text}")
 
 def handle_conversation(sender: str, text: str):
     """Handle conversation flow with customer"""
@@ -86,9 +130,10 @@ def handle_conversation(sender: str, text: str):
         
         state["date"] = text
         state["step"] = 2
-        send_message(sender, "מעולה! איזה סוג אירוע? (יום הולדת, חתונה, בר מצווה...)")
+        # Send interactive list instead of text
+        send_event_type_list(sender)
     
-    # Step 2: Get event type
+    # Step 2: Get event type (from list response)
     elif step == 2:
         state["event_type"] = text
         state["step"] = 3

@@ -393,8 +393,8 @@ def send_event_type_list(sender: str):
         "Content-Type": "application/json"
     }
     message = (
-        "מעולה! איזה סוג אירוע?" +
-        restart_with_cancel_text        
+        "מעולה! איזה סוג אירוע?\n\n" +
+        restart_with_cancel_text()
     )
     data = {
         "messaging_product": "whatsapp",

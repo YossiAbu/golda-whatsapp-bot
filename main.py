@@ -26,20 +26,6 @@ VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "my_secret_token")
 # Store conversation state in memory
 conversations = {}
 
-# Map event type IDs to display names
-EVENT_TYPES = {
-    "wedding": "💍 חתונה",
-    "bar_bat_mitzvah": "🕍 בר/בת מצווה",
-    "birthday": "🎂 יום הולדת",
-    "brit_milah": "👶 ברית מילה",
-    "engagement": "💕 אירוסין",
-    "company_event": "🏢 אירוע חברה",
-    "graduation_party": "🎓 מסיבת סיום",
-    "bachelor_party": "🎉 מסיבת רווקים/רווקות",
-    "festival": "🎪 פסטיבל/יריד",
-    "other": "❓ אחר"
-}
-
 # ============================================================================
 # WEBHOOK ENDPOINTS
 # ============================================================================
@@ -115,7 +101,8 @@ def home():
 
 def restart_with_cancel_text():
     """Instructions for restarting conversation with cancel text"""
-    return """רוצה להתחיל מחדש? כתבו 'ביטול'"""
+    return "רוצה להתחיל מחדש? כתבו 'ביטול'"
+
 
 def start_conversation(sender: str):
     """Start a new conversation with date request"""
@@ -153,7 +140,7 @@ def handle_text_message(sender: str, text: str):
     
     # Step 2: Get event type (text fallback)
     elif step == 2:
-        handle_event_type_text(sender, text, state)
+        handle_event_type_selection(sender, text)
     
     # Step 3: Get event location
     elif step == 3:
@@ -168,7 +155,7 @@ def cancel_conversation(sender: str):
     """Cancel current conversation and restart"""
     if sender in conversations:
         del conversations[sender]
-        
+    
     message = (
         "✅ השיחה בוטלה\n"
         "נתחיל שוב מההתחלה"
@@ -196,7 +183,7 @@ def handle_date_input(sender: str, text: str, state: dict):
 
 
 def handle_event_type_selection(sender: str, selected_title: str):
-    """Handle event type selection from interactive list"""
+    """Handle event type selection from interactive list or text"""
     if sender not in conversations:
         return
     
@@ -214,26 +201,13 @@ def handle_event_type_selection(sender: str, selected_title: str):
         send_message(sender, message)
 
 
-def handle_event_type_text(sender: str, text: str, state: dict):
-    """Handle event type as text (fallback)"""
-    state["event_type"] = text
-    state["step"] = 3
-    message = (
-        "מצוין!\n"
-        "איפה מתקיים האירוע?\n"
-        "(עיר או כתובת מדויקת)\n\n" +
-        restart_with_cancel_text()
-    )
-    send_message(sender, message)
-
-
 def handle_location_input(sender: str, text: str, state: dict):
     """Handle location input from customer"""
     state["location"] = text
     state["step"] = 4
     message = (
         "נהדר!\n"
-        "כמה אנשים צפויים?\n\n" + 
+        "כמה אנשים צפויים?\n\n" +
         restart_with_cancel_text()
     )
     send_message(sender, message)
@@ -278,8 +252,7 @@ def is_valid_date(date_str: str) -> bool:
 def is_valid_number(num_str: str) -> bool:
     """Check if string is a valid positive number"""
     try:
-        num = int(num_str)
-        return num > 0
+        return int(num_str) > 0
     except ValueError:
         return False
 
@@ -453,14 +426,13 @@ def send_customer_confirmation(sender: str, state: dict):
 def send_admin_notification(sender: str, state: dict):
     """Send lead details to admin"""
     message = (
-        f"🍦 התקבלה פנייה חדשה!\n\n"
+        "🍦 התקבלה פנייה חדשה!\n\n"
         f"📅 תאריך: {state['date']}\n"
         f"🎉 סוג: {state['event_type']}\n"
         f"📍 מיקום: {state['location']}\n"
         f"👥 אנשים: {state['guests']}\n"
         f"📞 טלפון: +{sender}"
     )
-    
     send_message(ADMIN_PHONE, message)
 
 # ============================================================================

@@ -159,7 +159,7 @@ def handle_interactive_response(sender: str, selected_id: str, selected_title: s
     if state.get("step") == 2:
         state["event_type"] = selected_title
         state["step"] = 3
-        send_message(sender, "נהדר! כמה אנשים צפויים?\n(אנא הכנס מספר)")
+        send_message(sender, "מצוין! 📍\nאיפה מתקיים האירוע?\n(עיר או כתובת מדויקת)")
 
 def handle_conversation(sender: str, text: str):
     """Handle conversation flow with customer"""
@@ -190,10 +190,16 @@ def handle_conversation(sender: str, text: str):
     elif step == 2:
         state["event_type"] = text
         state["step"] = 3
+        send_message(sender, "מצוין! 📍\nאיפה מתקיים האירוע?\n(עיר או כתובת מדויקת)")
+    
+    # Step 3: Get event location
+    elif step == 3:
+        state["location"] = text
+        state["step"] = 4
         send_message(sender, "נהדר! כמה אנשים צפויים?\n(אנא הכנס מספר)")
     
-    # Step 3: Get number of guests
-    elif step == 3:
+    # Step 4: Get number of guests
+    elif step == 4:
         # Validate number
         if not is_valid_number(text):
             send_message(sender, "❌ קלט לא תקין.\nאנא הכנס מספר של כמות אנשים\n(לדוגמה: 150)")
@@ -206,6 +212,7 @@ def handle_conversation(sender: str, text: str):
             f"🍦 ליד חדש מגולדה!\n\n"
             f"📅 תאריך: {state['date']}\n"
             f"🎉 סוג: {state['event_type']}\n"
+            f"📍 מיקום: {state['location']}\n"
             f"👥 אנשים: {state['guests']}\n"
             f"📞 טלפון: +{sender}"
         )

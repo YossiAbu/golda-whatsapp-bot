@@ -438,12 +438,12 @@ def send_event_type_list(sender: str):
 def send_customer_confirmation(sender: str, state: dict):
     """Send confirmation message to customer with summary"""
     message = (
-        "תודה רבה! 🎉\n"
+        "תודה רבה! 🎉\n\n"
         "קיבלנו את הפרטים שלך:\n"
         f"📅 תאריך: {state['date']}\n"
         f"🎉 סוג: {state['event_type']}\n"
         f"📍 מיקום: {state['location']}\n"
-        f"👥 אנשים: {state['guests']}\n"
+        f"👥 אנשים: {state['guests']}\n\n"
         "נציג יצור איתך קשר בהקדם עם הצעת מחיר\n"
         "מצפים לראותכם! 🍦✨"
     )
@@ -453,7 +453,7 @@ def send_customer_confirmation(sender: str, state: dict):
 def send_admin_notification(sender: str, state: dict):
     """Send lead details to admin"""
     message = (
-        f"🍦 ליד חדש מגולדה!\n\n"
+        f"🍦 התקבלה פנייה חדשה!\n\n"
         f"📅 תאריך: {state['date']}\n"
         f"🎉 סוג: {state['event_type']}\n"
         f"📍 מיקום: {state['location']}\n"

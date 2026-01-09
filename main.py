@@ -116,14 +116,12 @@ def home():
 def start_conversation(sender: str):
     """Start a new conversation with date request"""
     conversations[sender] = {"step": 1}
-    message = """
-                מתי מתקיים האירוע?
-                אנא הכנס תאריך בפורמט:
-                DD/MM/YYYY
-                (לדוגמה: 31/12/2026)
-
-                רוצה להתחיל מחדש? כתוב 'ביטול'
-    """
+    message = (
+        "מתי מתקיים האירוע?\n"
+        "אנא הכנס תאריך בפורמט: DD/MM/YYYY\n"
+        "(לדוגמה: 31/12/2026)\n\n"
+        "רוצה להתחיל מחדש? כתוב 'ביטול'"
+    )
     send_message(sender, message)
 
 

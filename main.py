@@ -164,11 +164,12 @@ def upload_image():
         
         with open("logo.jpg", "rb") as image_file:
             files = {
-                "file": image_file,
-                "messaging_product": (None, "whatsapp"),
-                "type": (None, "image/jpeg")
+                "file": ("logo.jpg", image_file, "image/jpeg")
             }
-            response = requests.post(url, headers=headers, files=files)
+            data = {
+                "messaging_product": "whatsapp"
+            }
+            response = requests.post(url, headers=headers, files=files, data=data)
         
         if response.status_code == 200:
             media_id = response.json().get("id")

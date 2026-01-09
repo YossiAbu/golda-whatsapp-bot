@@ -190,7 +190,7 @@ def handle_conversation(sender: str, text: str):
     elif step == 2:
         state["event_type"] = text
         state["step"] = 3
-        send_message(sender, "מצוין! 📍\nאיפה מתקיים האירוע?\n(עיר או כתובת מדויקת)")
+        send_message(sender, "מצוין! \nאיפה מתקיים האירוע?\n(עיר או כתובת מדויקת)")
     
     # Step 3: Get event location
     elif step == 3:
@@ -219,7 +219,7 @@ def handle_conversation(sender: str, text: str):
         send_message(ADMIN_PHONE, summary)
         
         # Thank the customer
-        send_message(sender, "תודה רבה! 🎉\nנועם יחזור אליך בהקדם עם הצעת מחיר.")
+        send_message(sender, "תודה רבה! 🎉\bנציג יחזור אליך בהקדם עם הצעת מחיר.")
         
         # Reset conversation
         del conversations[sender]

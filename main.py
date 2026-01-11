@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 app = FastAPI()
+PORT = int(os.getenv("PORT", 8000))
 
 # ============================================================================
 # CONFIGURATION
@@ -471,3 +472,8 @@ def upload_image():
     except Exception as e:
         logger.error(f"Error uploading image: {e}")
         return None
+    
+    
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
